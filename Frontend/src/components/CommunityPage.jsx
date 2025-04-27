@@ -4,7 +4,7 @@ import axios from "axios";
 import Navbar from "./Navbar";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LoadingSpinner from "./LoadingSpinner"; // You should create this component
+import LoadingSpinner from "./LoadSpinner"; // You should create this component
 
 const CommunityPage = () => {
   const { id } = useParams();
