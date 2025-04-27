@@ -4,10 +4,14 @@ import Home from "./components/Home";
 import Login from "./components/Login"; 
 import Register from "./components/Register"; 
 import ProtectedRoute from "./components/ProtectedRoute"; 
-// import CommunityPage from "./components/CommunityPage"; // Import the CommunityPage component
+import CreatePost from "./components/createPost";
+import Navbar from "./components/Navbar"; // Import the Navbar component
+import Footer from "./components/Footer"; // Import the Footer component
+// import CommunityPlatform from "./components/CommunityPlatform";
 // import LeaningPage from "./components/PlanManagement"
 // import CreateLearningPlan from "./components/CreateLearningPlan";
 import "./index.css";
+
 
 function App() {
   return (
@@ -23,9 +27,12 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        {/* <Route path="/community/:id" element={<CommunityPage />} />
-        <Route path="/learning" element={<LeaningPage />} />
-        <Route path="/create-learning-plan" element={<CreateLearningPlan />} /> */}
+        <Route path="/createPost" element={<CreatePost />} />
+        <Route path="/navbar" element={<Navbar />} />
+        <Route path="/footer" element={<Footer />} />
+        {/* <Route path="/community/:id" element= {<CommunityPlatform /> }/> */}
+        {/* // <Route path="/learning" element={<LeaningPage />} />
+        // <Route path="/create-learning-plan" element={<CreateLearningPlan />} /> */ }
       </Routes>
     </Router>
   );

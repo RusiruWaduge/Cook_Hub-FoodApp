@@ -1,4 +1,5 @@
 import React from "react";
+import logo from "../assets/logo.png"; // Adjust the path as necessary
 
 const Navbar = () => {
   return (
@@ -6,12 +7,16 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-[#F97316]">
-              CookieVerse 🍽️
+          <div className="flex items-center space-x-2">
+            <img
+              src={logo}
+              alt="CookHUB Logo"
+              className="h-15 w-15 rounded-full"
+            />
+            <h1 className="text-2xl font-bold text-[#F97316] tracking-wide">
+              Cook HUB 🍽
             </h1>
           </div>
-
           {/* Nav Links */}
           <div className="hidden md:flex space-x-8">
             <a
@@ -27,7 +32,7 @@ const Navbar = () => {
               Explore
             </a>
             <a
-              href="/profile"
+              href="/CreatePost"
               className="text-gray-600 hover:text-[#F97316] font-medium"
             >
               Profile
@@ -55,4 +60,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default Navbar;

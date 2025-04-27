@@ -37,14 +37,14 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No session
             .and()
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/").permitAll() // Allow login/register without token
-                .requestMatchers("/api/communities/").permitAll() // <--- add this line
-                .requestMatchers("/api/posts/").permitAll() // <--- add this line
-                .requestMatchers("/api/likecomment/").permitAll() // <--- add this line
+                .requestMatchers("/api/auth/**").permitAll() // Allow login/register without token
+                .requestMatchers("/api/communities/**").permitAll() // <--- add this line
+                .requestMatchers("/api/posts/**").permitAll() // <--- add this line
+                .requestMatchers("/api/likecomment/**").permitAll() // <--- add this line
                 .anyRequest().authenticated() // Everything else needs auth
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // Add our JWT filter
 
         return http.build();
-}
+    }
 }
