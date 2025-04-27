@@ -77,12 +77,12 @@ public class PostService {
         post.setTitle(dto.getTitle());
         post.setContent(dto.getContent());
         post.setImage(dto.getImage());
-        post.setIsPublic(dto.getIsPublic()); // Corrected here!
+        post.setIsPublic(dto.getIsPublic()); 
 
         return postRepository.save(post);
     }
 
-    // Update visibility of the post
+    // Update the visibility of a post
     public Post updateVisibility(String postId, boolean isPublic) {
         Optional<Post> postOptional = postRepository.findById(postId);
         if (postOptional.isPresent()) {
@@ -99,5 +99,47 @@ public class PostService {
         } else {
             throw new PostNotFoundException("Post not found with id: " + postId);
         }
-}
+    }
+
+    // Update post details (title, content, image URL)
+    public Post updatePost(String postId, PostDTO dto) {
+        Optional<Post> existingPostOptional = postRepository.findById(postId);
+        if (existingPostOptional.isPresent()) {
+            Post existingPost = existingPostOptional.get();
+
+            // Ensure the logged-in user is updating their own post
+            String loggedInUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            if (!existingPost.getUserEmail().equals(loggedInUserEmail)) {
+                throw new AccessDeniedException("You do not have permission to update this post.");
+            }
+
+            // Update post fields
+            existingPost.setTitle(dto.getTitle());
+            existingPost.setContent(dto.getContent());
+            existingPost.setImage(dto.getImage());  // Update image if provided
+            existingPost.setIsPublic(dto.getIsPublic()); 
+
+            return postRepository.save(existingPost);
+        } else {
+            throw new PostNotFoundException("Post not found with id: " + postId);
+        }
+    }
+
+    // Delete a post by ID
+    public boolean deletePost(String postId, String userEmail) {
+        Optional<Post> postOptional = postRepository.findById(postId);
+        if (postOptional.isPresent()) {
+            Post post = postOptional.get();
+
+            // Ensure the logged-in user is deleting their own post
+            if (!post.getUserEmail().equals(userEmail)) {
+                throw new AccessDeniedException("You do not have permission to delete this post.");
+            }
+
+            postRepository.delete(post); // Delete the post
+            return true;
+        } else {
+            return false; // Post not found
+        }
+    }
 }

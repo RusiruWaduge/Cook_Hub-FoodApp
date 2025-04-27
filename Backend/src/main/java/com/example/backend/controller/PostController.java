@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,5 +59,34 @@ public class PostController {
     @GetMapping("/public")
     public List<PostDTO> getPublicPosts() {
         return postService.getPublicPosts();
-}
+    }
+
+    // Update a post (for title, content, and image URL)
+    @PutMapping("/{id}")
+    public ResponseEntity<Post> updatePost(@PathVariable String id, @RequestBody PostDTO dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+        dto.setUserEmail(userEmail); // Ensure the post is updated for the correct user
+
+        Post updatedPost = postService.updatePost(id, dto);
+        if (updatedPost == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(updatedPost);
+    }
+
+    // Delete a post by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable String id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+
+        boolean isDeleted = postService.deletePost(id, userEmail);
+        if (!isDeleted) {
+            return ResponseEntity.notFound().build(); // Post not found or user not authorized
+        }
+
+        return ResponseEntity.noContent().build(); // Successfully deleted
+    }
 }
