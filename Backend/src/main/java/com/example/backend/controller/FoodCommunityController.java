@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import com.example.backend.model.FoodCommunity;
 import com.example.backend.model.CommunityPost;
+import com.example.backend.repository.FoodCommunityRepository;
 import com.example.backend.repository.CommunityPostRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,14 +23,14 @@ import java.util.Optional;
 public class FoodCommunityController {
 
     @Autowired
-    private CommunityPostRepository foodCommunityRepository;
+    private FoodCommunityRepository foodCommunityRepository;
 
     @Autowired
     private CommunityPostRepository communityPostRepository;
 
     // Create a new food community
     @PostMapping
-    public CommunityPost createCommunity(@RequestBody CommunityPost foodCommunity) {
+    public FoodCommunity createCommunity(@RequestBody FoodCommunity foodCommunity) {
         try {
             return foodCommunityRepository.save(foodCommunity);
         } catch (Exception e) {
@@ -38,7 +40,7 @@ public class FoodCommunityController {
 
     // Get all food communities
     @GetMapping
-    public List<CommunityPost> getAllCommunities() {
+    public List<FoodCommunity> getAllCommunities() {
         try {
             return foodCommunityRepository.findAll();
         } catch (Exception e) {
@@ -48,9 +50,9 @@ public class FoodCommunityController {
 
     // Get a specific food community by ID
     @GetMapping("/{id}")
-    public CommunityPost getCommunityById(@PathVariable String id) {
+    public FoodCommunity getCommunityById(@PathVariable String id) {
         try {
-            Optional<CommunityPost> community = foodCommunityRepository.findById(id);
+            Optional<FoodCommunity> community = foodCommunityRepository.findById(id);
             if (community.isPresent()) {
                 return community.get();
             } else {
@@ -63,13 +65,13 @@ public class FoodCommunityController {
 
     // Join a food community
     @PostMapping("/{id}/join")
-    public CommunityPost joinCommunity(@PathVariable String id, @RequestParam String userName) {
+    public FoodCommunity joinCommunity(@PathVariable String id, @RequestParam String userName) {
         System.out.println("Joining community: " + id + " by " + userName);
 
-        Optional<CommunityPost> optionalCommunity = foodCommunityRepository.findById(id);
+        Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
 
         if (optionalCommunity.isPresent()) {
-            CommunityPost community = optionalCommunity.get();
+            FoodCommunity community = optionalCommunity.get();
             List<String> members = community.getMembers();
 
             if (!members.contains(userName)) {
@@ -101,11 +103,11 @@ public class FoodCommunityController {
     }
 
    @PostMapping("/{id}/leave")
-public CommunityPost leaveCommunity(@PathVariable String id, @RequestParam String userName) {
-    Optional<CommunityPost> optionalCommunity = foodCommunityRepository.findById(id);
+public FoodCommunity leaveCommunity(@PathVariable String id, @RequestParam String userName) {
+    Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
 
     if (optionalCommunity.isPresent()) {
-        CommunityPost community = optionalCommunity.get();
+        FoodCommunity community = optionalCommunity.get();
         List<String> members = community.getMembers();
 
         if (members.contains(userName)) {
@@ -147,10 +149,10 @@ public ResponseEntity<?> likePost(@PathVariable String communityId,
 }
 
 @PutMapping("/{id}")
-public ResponseEntity<CommunityPost> updateCommunity(@PathVariable String id, @RequestBody CommunityPost updatedCommunity) {
-    Optional<CommunityPost> optionalCommunity = foodCommunityRepository.findById(id);
+public ResponseEntity<FoodCommunity> updateCommunity(@PathVariable String id, @RequestBody FoodCommunity updatedCommunity) {
+    Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
     if (optionalCommunity.isPresent()) {
-        CommunityPost community = optionalCommunity.get();
+        FoodCommunity community = optionalCommunity.get();
         community.setName(updatedCommunity.getName());
         community.setDescription(updatedCommunity.getDescription());
         foodCommunityRepository.save(community);
@@ -164,10 +166,10 @@ public ResponseEntity<CommunityPost> updateCommunity(@PathVariable String id, @R
 @DeleteMapping("/{id}")
 public ResponseEntity<?> deleteCommunity(@PathVariable String id) {
     try {
-        Optional<CommunityPost> optionalCommunity = CommunityPostRepository.findById(id);
+        Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
 
         if (optionalCommunity.isPresent()) {
-            CommunityPost community = optionalCommunity.get();
+            FoodCommunity community = optionalCommunity.get();
             community.cleanUpMembers();  // Clean up members before deleting the community
             
             foodCommunityRepository.deleteById(id);  // Delete the community by ID
@@ -185,6 +187,32 @@ public ResponseEntity<?> deleteCommunity(@PathVariable String id) {
 
 
 
+// Add this method in your FoodCommunityController class
+@PostMapping("/{communityId}/posts/{postId}/unlike")
+public ResponseEntity<?> unlikePost(@PathVariable String communityId, 
+                                    @PathVariable String postId, 
+                                    @RequestParam String userName) {
+    Optional<CommunityPost> postOptional = communityPostRepository.findById(postId);
+    
+    if (postOptional.isPresent()) {
+        CommunityPost post = postOptional.get();
+
+        // Check if the user has liked the post
+        if (post.getLikedBy().contains(userName)) {
+            // Remove the user from the likedBy list
+            post.getLikedBy().remove(userName);
+            post.setLikes(post.getLikes() - 1);  // Decrement like count
+            communityPostRepository.save(post);  // Save the updated post
+
+            return ResponseEntity.ok("Post unliked successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                 .body("User hasn't liked this post yet.");
+        }
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Post not found.");
+    }
+}
 
 
 
