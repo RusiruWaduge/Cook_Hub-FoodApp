@@ -4,9 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import com.example.backend.model.FoodCommunity;
 import com.example.backend.model.CommunityPost;
-import com.example.backend.repository.FoodCommunityRepository;
 import com.example.backend.repository.CommunityPostRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,14 +21,14 @@ import java.util.Optional;
 public class FoodCommunityController {
 
     @Autowired
-    private FoodCommunityRepository foodCommunityRepository;
+    private CommunityPostRepository foodCommunityRepository;
 
     @Autowired
     private CommunityPostRepository communityPostRepository;
 
     // Create a new food community
     @PostMapping
-    public FoodCommunity createCommunity(@RequestBody FoodCommunity foodCommunity) {
+    public CommunityPost createCommunity(@RequestBody CommunityPost foodCommunity) {
         try {
             return foodCommunityRepository.save(foodCommunity);
         } catch (Exception e) {
@@ -40,7 +38,7 @@ public class FoodCommunityController {
 
     // Get all food communities
     @GetMapping
-    public List<FoodCommunity> getAllCommunities() {
+    public List<CommunityPost> getAllCommunities() {
         try {
             return foodCommunityRepository.findAll();
         } catch (Exception e) {
@@ -50,9 +48,9 @@ public class FoodCommunityController {
 
     // Get a specific food community by ID
     @GetMapping("/{id}")
-    public FoodCommunity getCommunityById(@PathVariable String id) {
+    public CommunityPost getCommunityById(@PathVariable String id) {
         try {
-            Optional<FoodCommunity> community = foodCommunityRepository.findById(id);
+            Optional<CommunityPost> community = foodCommunityRepository.findById(id);
             if (community.isPresent()) {
                 return community.get();
             } else {
@@ -65,13 +63,13 @@ public class FoodCommunityController {
 
     // Join a food community
     @PostMapping("/{id}/join")
-    public FoodCommunity joinCommunity(@PathVariable String id, @RequestParam String userName) {
+    public CommunityPost joinCommunity(@PathVariable String id, @RequestParam String userName) {
         System.out.println("Joining community: " + id + " by " + userName);
 
-        Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
+        Optional<CommunityPost> optionalCommunity = foodCommunityRepository.findById(id);
 
         if (optionalCommunity.isPresent()) {
-            FoodCommunity community = optionalCommunity.get();
+            CommunityPost community = optionalCommunity.get();
             List<String> members = community.getMembers();
 
             if (!members.contains(userName)) {
@@ -103,11 +101,11 @@ public class FoodCommunityController {
     }
 
    @PostMapping("/{id}/leave")
-public FoodCommunity leaveCommunity(@PathVariable String id, @RequestParam String userName) {
-    Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
+public CommunityPost leaveCommunity(@PathVariable String id, @RequestParam String userName) {
+    Optional<CommunityPost> optionalCommunity = foodCommunityRepository.findById(id);
 
     if (optionalCommunity.isPresent()) {
-        FoodCommunity community = optionalCommunity.get();
+        CommunityPost community = optionalCommunity.get();
         List<String> members = community.getMembers();
 
         if (members.contains(userName)) {
@@ -149,10 +147,10 @@ public ResponseEntity<?> likePost(@PathVariable String communityId,
 }
 
 @PutMapping("/{id}")
-public ResponseEntity<FoodCommunity> updateCommunity(@PathVariable String id, @RequestBody FoodCommunity updatedCommunity) {
-    Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
+public ResponseEntity<CommunityPost> updateCommunity(@PathVariable String id, @RequestBody CommunityPost updatedCommunity) {
+    Optional<CommunityPost> optionalCommunity = foodCommunityRepository.findById(id);
     if (optionalCommunity.isPresent()) {
-        FoodCommunity community = optionalCommunity.get();
+        CommunityPost community = optionalCommunity.get();
         community.setName(updatedCommunity.getName());
         community.setDescription(updatedCommunity.getDescription());
         foodCommunityRepository.save(community);
@@ -166,10 +164,10 @@ public ResponseEntity<FoodCommunity> updateCommunity(@PathVariable String id, @R
 @DeleteMapping("/{id}")
 public ResponseEntity<?> deleteCommunity(@PathVariable String id) {
     try {
-        Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
+        Optional<CommunityPost> optionalCommunity = CommunityPostRepository.findById(id);
 
         if (optionalCommunity.isPresent()) {
-            FoodCommunity community = optionalCommunity.get();
+            CommunityPost community = optionalCommunity.get();
             community.cleanUpMembers();  // Clean up members before deleting the community
             
             foodCommunityRepository.deleteById(id);  // Delete the community by ID
