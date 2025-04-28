@@ -38,9 +38,9 @@ const Navbar = () => {
               className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full"
               aria-label="CookieVerse Home"
             >
-              <img src={logo} alt="CookieVerse Logo" className="h-20 w-20 " />
+              <img src={logo} alt="CookHUB Logo" className="h-16 w-16 rounded-full shadow-md border-2 border-gray-200" />
               <h1 className="text-2xl font-bold text-orange-500 tracking-tight">
-                Cookie<span className="text-gray-800">Verse</span>
+                Cook<span className="text-gray-800">HUB</span>
                 <span
                   role="img"
                   aria-label="plate with cutlery"
