@@ -1,6 +1,5 @@
 package com.example.backend.service;
 
-
 import com.example.backend.model.LearningPlan;
 import com.example.backend.repository.LearningPlanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,4 +25,16 @@ public class LearningPlanService {
     public Optional<LearningPlan> getLearningPlanById(String id) {
         return repository.findById(id);
     }
+
+   
+
+    public boolean deleteLearningPlan(String id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+
 }
