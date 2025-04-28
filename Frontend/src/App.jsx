@@ -10,6 +10,9 @@ import Footer from "./components/Footer"; // Import the Footer component
 // import CommunityPlatform from "./components/CommunityPlatform";
 // import LeaningPage from "./components/PlanManagement"
 // import CreateLearningPlan from "./components/CreateLearningPlan";
+import LearningPlans from "./components/LearningPlans";
+import LearningPlanDetails from "./components/LearningPlanDetails";
+import CreateLearningPlan from "./components/CreateLeaningPlan";
 import "./index.css";
 
 
@@ -33,6 +36,10 @@ function App() {
         {/* <Route path="/community/:id" element= {<CommunityPlatform /> }/> */}
         {/* // <Route path="/learning" element={<LeaningPage />} />
         // <Route path="/create-learning-plan" element={<CreateLearningPlan />} /> */ }
+        <Route path="/learning" element={<LearningPlans />} />
+        <Route path="/learning-plan/:id" element={<LearningPlanDetails />} />
+        
+        <Route path="/create-learning-plan" element={<CreateLearningPlan />} />
       </Routes>
     </Router>
   );
