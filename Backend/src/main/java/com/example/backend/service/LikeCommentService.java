@@ -54,4 +54,15 @@ public class LikeCommentService {
         response.put("liked", likeCommentRepository.existsByPostIdAndUserIdAndLiked(postId, userId, true));
         return response;
     }
+
+    public void deleteComment(String commentId, String userId) {
+        LikeComment comment = likeCommentRepository.findById(commentId)
+            .orElseThrow(() -> new RuntimeException("Comment not found"));
+        
+        if (!comment.getUserId().equals(userId)) {
+            throw new RuntimeException("You can only delete your own comments");
+        }
+        
+        likeCommentRepository.delete(comment);
+    }
 }

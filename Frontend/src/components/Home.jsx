@@ -135,6 +135,35 @@ const Home = () => {
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      alert("Authentication token is missing. Please log in again.");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this comment?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `http://localhost:8080/api/likecomment/comment/${commentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            userId: token,
+          },
+        }
+      );
+      fetchPublicPosts();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert(error.response?.data?.message || "Failed to delete comment. Please try again later.");
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -430,6 +459,15 @@ const Home = () => {
                                   <p className="text-gray-600 mt-1">
                                     {comment.comment}
                                   </p>
+                                  {/* Delete button for comment owner */}
+                                  {comment.userId === localStorage.getItem("token") && (
+                                    <button 
+                                      onClick={() => handleDeleteComment(comment.id)}
+                                      className="mt-2 text-xs text-red-500 hover:text-red-700"
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))}

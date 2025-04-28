@@ -52,7 +52,11 @@ public class LikeCommentController {
         return ResponseEntity.ok(likeCommentService.getUserLikeStatus(postId, userId));
     }
 
-    
-
-    
+    @DeleteMapping("/comment/{commentId}")
+    public ResponseEntity<String> deleteComment(
+            @PathVariable String commentId,
+            @RequestHeader("userId") String userId) {
+        likeCommentService.deleteComment(commentId, userId);
+        return ResponseEntity.ok("Comment deleted successfully.");
+    }
 }
