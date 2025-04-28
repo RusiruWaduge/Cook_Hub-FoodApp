@@ -25,6 +25,8 @@ const CommunityPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
 
+  const backgroundImageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80";
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -272,12 +274,34 @@ const CommunityPage = () => {
         </div>
       </div>
     );
+    if (isLoading) {
+      return (
+        <div 
+          className="flex justify-center items-center min-h-screen"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), url(${backgroundImageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed'
+          }}
+        >
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        </div>
+      );
+    }
 
   return (
     <>
       <Navbar />
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="min-h-screen bg-gradient-to-br from-[#FFFBF2] via-[#FFDCB9] to-[#FFAA6B] p-4 md:p-10 font-sans">
+      <div     
+        style={{
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 240, 220, 0.9)), url(${backgroundImageUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          backgroundRepeat: 'no-repeat'
+        }}className="min-h-screen bg-gradient-to-br from-[#FFFBF2] via-[#FFDCB9] to-[#FFAA6B] p-4 md:p-10 font-sans">
         {isProcessing && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
