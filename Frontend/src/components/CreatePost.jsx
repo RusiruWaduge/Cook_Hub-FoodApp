@@ -8,7 +8,7 @@ const CreatePost = () => {
   const [newPost, setNewPost] = useState({
     title: "",
     content: "",
-    image: "",  // Holds the Base64-encoded image string
+    image: "", // Holds the Base64-encoded image string
     isPublic: true,
   });
   const [editingPostId, setEditingPostId] = useState(null); // Track which post is being edited
@@ -81,10 +81,19 @@ const CreatePost = () => {
     // Add logic for adding a comment
   };
 
-  // Handle image URL input
+  // Handle image file input
   const handleImageChange = (e) => {
-    const imageUrl = e.target.value;
-    setNewPost({ ...newPost, image: imageUrl });
+    const file = e.target.files[0]; // Get the selected file
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setNewPost({ ...newPost, image: reader.result }); // Set Base64 string as image
+      };
+
+      reader.readAsDataURL(file); // Convert the image file to a Base64 string
+    }
   };
 
   // Handle image click to view full image
