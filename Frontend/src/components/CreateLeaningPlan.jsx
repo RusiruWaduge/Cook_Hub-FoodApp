@@ -60,9 +60,11 @@ const CreateLearningPlan = () => {
         "http://localhost:8080/api/learningplans",
         learningPlanData,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              
         }
       );
 

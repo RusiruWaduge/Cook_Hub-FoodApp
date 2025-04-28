@@ -7,20 +7,16 @@ const LearningPlanDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // State to hold the learning plan data
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch the learning plan details based on the ID
   useEffect(() => {
     const fetchPlanDetails = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:8080/api/learningplans/${id}`
-        );
+        const response = await axios.get(`http://localhost:8080/api/learningplans/${id}`);
         setPlan(response.data);
-      } catch (err) {
+      } catch {
         setError("Failed to fetch the plan details.");
       } finally {
         setLoading(false);
@@ -32,7 +28,6 @@ const LearningPlanDetails = () => {
     }
   }, [id]);
 
-  // Handle loading state
   if (loading) {
     return (
       <div className="min-h-screen flex justify-center items-center text-2xl text-gray-600">
@@ -41,7 +36,6 @@ const LearningPlanDetails = () => {
     );
   }
 
-  // Handle error state
   if (error) {
     return (
       <div className="min-h-screen flex justify-center items-center text-2xl text-red-500">
@@ -50,7 +44,6 @@ const LearningPlanDetails = () => {
     );
   }
 
-  // If plan not found
   if (!plan) {
     return (
       <div className="min-h-screen flex justify-center items-center text-2xl text-red-500">
@@ -76,9 +69,7 @@ const LearningPlanDetails = () => {
           />
         </div>
 
-        <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-          📋 Topics to Cover
-        </h3>
+        <h3 className="text-2xl font-semibold text-gray-800 mb-4">📋 Topics to Cover</h3>
 
         <div className="space-y-6">
           {plan.steps.map((step, index) => (
@@ -86,15 +77,14 @@ const LearningPlanDetails = () => {
               key={index}
               className="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-300 shadow"
             >
-              <h4 className="text-xl font-semibold text-orange-600">
-                {step.topic}
-              </h4>
+              <h4 className="text-xl font-semibold text-orange-600">{step.topic}</h4>
               <p className="text-gray-700">
                 <strong>Resources:</strong>{" "}
                 <a
                   href={step.resources}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="text-blue-600 underline"
                 >
                   {step.resources}
                 </a>
