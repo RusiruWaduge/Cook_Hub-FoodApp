@@ -6,10 +6,6 @@ import Register from "./components/Register";
 import ProtectedRoute from "./components/ProtectedRoute"; 
 import Navbar from "./components/Navbar"; // Import the Navbar component
 import Footer from "./components/Footer"; // Import the Footer component
-import CommunityPlatform from "./components/CommunityPage";
-import LearningPlans from "./components/LearningPlans";
-import LearningPlanDetails from "./components/LearningPlanDetails";
-import CreateLearningPlan from "./components/CreateLeaningPlan";
 import "./index.css";
 
 
@@ -26,10 +22,9 @@ function App() {
           }
         />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<Register />} />s
         <Route path="/navbar" element={<Navbar />} />
         <Route path="/footer" element={<Footer />} />
-        <Route path="/community/:id" element= {<CommunityPlatform /> }/>
       </Routes>
     </Router>
   );

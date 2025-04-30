@@ -24,9 +24,8 @@ const Home = () => {
     { id: 3, name: "Charlie 🍕", specialty: "Italian Food" },
     { id: 4, name: "Dana 🥗", specialty: "Healthy Eating" },
   ];
-
-  // Background image URL - can be replaced with any food-themed image
   const backgroundImageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80";
+
 
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
@@ -138,6 +137,33 @@ const Home = () => {
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      alert("Authentication token is missing. Please log in again.");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this comment?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `http://localhost:8080/api/likecomment/comment/${commentId}`,
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([fetchCommunities(), fetchPublicPosts()]);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -166,21 +192,18 @@ const Home = () => {
 
   const handleCommentSubmit = async (e, postId) => {
     e.preventDefault();
-
     if (!commentContent.trim()) {
       alert("Please enter a comment.");
       return;
     }
-
+  
     const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
     const username = localStorage.getItem("username");
-
-    if (!username || !userId) {
-      alert("User information is missing. Please log in again.");
+  
+    if (!token || !username) {
+      alert("Authentication token or username is missing. Please log in again.");
       return;
     }
-
     try {
       await axios.post(
         `http://localhost:8080/api/likecomment/comment/${postId}`,
@@ -188,19 +211,18 @@ const Home = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            userId: userId,
-            username: username,
             "Content-Type": "text/plain",
+            userId: token,
+            username: username
           },
         }
       );
-
       setCommentContent("");
       setShowCommentBox(null);
       fetchPublicPosts();
     } catch (error) {
       console.error("Error adding comment:", error);
-      alert("Failed to add comment. Please try again later.");
+      alert(error.response?.data?.message || "Failed to add comment. Please try again later.");
     }
   };
 
@@ -260,7 +282,6 @@ const Home = () => {
                   Logout
                 </button>
               </div>
-
               <div className="bg-white rounded-xl shadow-lg p-6 backdrop-blur-sm bg-opacity-80">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
@@ -291,6 +312,7 @@ const Home = () => {
 
             {/* Center Column - Posts */}
             <div className="lg:w-2/4 w-full">
+
               <div className="bg-white rounded-xl shadow-lg p-6 mb-6 backdrop-blur-sm bg-opacity-80">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
@@ -307,6 +329,7 @@ const Home = () => {
                 {publicPosts.map((post) => (
                   <div
                     key={post.id}
+
                     className="bg-white rounded-xl shadow-lg overflow-hidden transition-all hover:shadow-xl backdrop-blur-sm bg-opacity-80"
                   >
                     {/* Post Header */}
@@ -451,6 +474,14 @@ const Home = () => {
                                   <p className="text-gray-600 mt-1">
                                     {comment.comment}
                                   </p>
+                                  {comment.userId === localStorage.getItem("token") && (
+                                    <button 
+                                      onClick={() => handleDeleteComment(comment.id)}
+                                      className="mt-2 text-xs text-red-500 hover:text-red-700"
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -503,7 +534,6 @@ const Home = () => {
               <div className="bg-white rounded-xl shadow-lg p-6 backdrop-blur-sm bg-opacity-80">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
-                    🍽️
                   </span>
                   Food Communities
                 </h2>
