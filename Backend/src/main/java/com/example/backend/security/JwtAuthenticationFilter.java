@@ -1,15 +1,12 @@
 package com.example.backend.security;
 
-import java.io.IOException;
-import java.util.Collections;
-
+import com.example.backend.service.JwtService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.example.backend.service.JwtService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -50,5 +47,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Proceed with the filter chain
         filterChain.doFilter(request, response);
     }
-
 }

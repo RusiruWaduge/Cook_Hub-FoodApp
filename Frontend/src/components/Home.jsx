@@ -24,6 +24,8 @@ const Home = () => {
     { id: 3, name: "Charlie 🍕", specialty: "Italian Food" },
     { id: 4, name: "Dana 🥗", specialty: "Healthy Eating" },
   ];
+  const backgroundImageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80";
+
 
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
@@ -150,17 +152,15 @@ const Home = () => {
     try {
       await axios.delete(
         `http://localhost:8080/api/likecomment/comment/${commentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            userId: token,
-          },
-        }
-      );
-      fetchPublicPosts();
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([fetchCommunities(), fetchPublicPosts()]);
     } catch (error) {
-      console.error("Error deleting comment:", error);
-      alert(error.response?.data?.message || "Failed to delete comment. Please try again later.");
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -192,7 +192,6 @@ const Home = () => {
 
   const handleCommentSubmit = async (e, postId) => {
     e.preventDefault();
-  
     if (!commentContent.trim()) {
       alert("Please enter a comment.");
       return;
@@ -205,7 +204,6 @@ const Home = () => {
       alert("Authentication token or username is missing. Please log in again.");
       return;
     }
-  
     try {
       await axios.post(
         `http://localhost:8080/api/likecomment/comment/${postId}`,
@@ -219,7 +217,6 @@ const Home = () => {
           },
         }
       );
-  
       setCommentContent("");
       setShowCommentBox(null);
       fetchPublicPosts();
@@ -235,7 +232,15 @@ const Home = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div 
+        className="flex justify-center items-center min-h-screen"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), url(${backgroundImageUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
       </div>
     );
@@ -244,12 +249,21 @@ const Home = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-[#FFFBF2] via-[#FFDCB9] to-[#FFAA6B] p-4 md:p-10 font-sans">
+      <div 
+        className="min-h-screen p-4 md:p-10 font-sans"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 240, 220, 0.9)), url(${backgroundImageUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-start gap-6 flex-col lg:flex-row">
             {/* Left Column - User Profile & Suggestions */}
             <div className="lg:w-1/4 w-full">
-              <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 backdrop-blur-sm bg-opacity-80">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-full bg-orange-200 flex items-center justify-center text-2xl font-bold text-orange-600">
                     {username.charAt(0).toUpperCase()}
@@ -268,8 +282,7 @@ const Home = () => {
                   Logout
                 </button>
               </div>
-
-              <div className="bg-white rounded-xl shadow-md p-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 backdrop-blur-sm bg-opacity-80">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
                     👥
@@ -299,7 +312,8 @@ const Home = () => {
 
             {/* Center Column - Posts */}
             <div className="lg:w-2/4 w-full">
-              <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 backdrop-blur-sm bg-opacity-80">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
                     🥘
@@ -315,7 +329,8 @@ const Home = () => {
                 {publicPosts.map((post) => (
                   <div
                     key={post.id}
-                    className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg"
+
+                    className="bg-white rounded-xl shadow-lg overflow-hidden transition-all hover:shadow-xl backdrop-blur-sm bg-opacity-80"
                   >
                     {/* Post Header */}
                     <div className="p-4 border-b border-gray-100 flex items-center gap-3">
@@ -459,7 +474,6 @@ const Home = () => {
                                   <p className="text-gray-600 mt-1">
                                     {comment.comment}
                                   </p>
-                                  {/* Delete button for comment owner */}
                                   {comment.userId === localStorage.getItem("token") && (
                                     <button 
                                       onClick={() => handleDeleteComment(comment.id)}
@@ -517,10 +531,9 @@ const Home = () => {
 
             {/* Right Column - Communities */}
             <div className="lg:w-1/4 w-full">
-              <div className="bg-white rounded-xl shadow-md p-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 backdrop-blur-sm bg-opacity-80">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
-                    🍽
                   </span>
                   Food Communities
                 </h2>

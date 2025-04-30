@@ -46,7 +46,6 @@ const Navbar = () => {
                   aria-label="plate with cutlery"
                   className="ml-1"
                 >
-                  🍽
                 </span>
               </h1>
             </Link>
