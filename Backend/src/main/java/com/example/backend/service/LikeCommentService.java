@@ -17,8 +17,8 @@ public class LikeCommentService {
 
     public void toggleLike(String postId, String userId, String username) {
         LikeComment existingLike = likeCommentRepository
-            .findTopByPostIdAndUserIdAndLiked(postId, userId, true);
-        
+                .findTopByPostIdAndUserIdAndLiked(postId, userId, true);
+
         if (existingLike == null) {
             LikeComment newLike = new LikeComment();
             newLike.setPostId(postId);
@@ -57,12 +57,24 @@ public class LikeCommentService {
 
     public void deleteComment(String commentId, String userId) {
         LikeComment comment = likeCommentRepository.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("Comment not found"));
-        
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
         if (!comment.getUserId().equals(userId)) {
             throw new RuntimeException("You can only delete your own comments");
         }
-        
+
         likeCommentRepository.delete(comment);
+    }
+
+    public void updateComment(String commentId, String userId, String newCommentContent) {
+        LikeComment comment = likeCommentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        if (!comment.getUserId().equals(userId)) {
+            throw new RuntimeException("You can only edit your own comments");
+        }
+
+        comment.setComment(newCommentContent);
+        likeCommentRepository.save(comment);
     }
 }

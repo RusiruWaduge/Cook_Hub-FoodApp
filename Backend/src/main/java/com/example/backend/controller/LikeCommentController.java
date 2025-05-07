@@ -59,4 +59,13 @@ public class LikeCommentController {
         likeCommentService.deleteComment(commentId, userId);
         return ResponseEntity.ok("Comment deleted successfully.");
     }
+
+    @PutMapping("/comment/{commentId}")
+    public ResponseEntity<String> updateComment(
+            @PathVariable String commentId,
+            @RequestHeader("userId") String userId,
+            @RequestBody String newCommentContent) {
+        likeCommentService.updateComment(commentId, userId, newCommentContent);
+        return ResponseEntity.ok("Comment updated successfully.");
+    }
 }
