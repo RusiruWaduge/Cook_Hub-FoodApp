@@ -58,9 +58,15 @@ public class PostController {
     // Get only public posts for the home page
     @GetMapping("/public")
     public List<PostDTO> getPublicPosts() {
-        return postService.getPublicPosts();
+        List<PostDTO> publicPosts = postService.getPublicPosts();
+    
+        if (publicPosts.isEmpty()) {
+            System.out.println("No public posts found.");  // Add debugging log for clarity
+        }
+    
+        return publicPosts;
     }
-
+    
     // Update a post (for title, content, and image URL)
     @PutMapping("/{id}")
     public ResponseEntity<Post> updatePost(@PathVariable String id, @RequestBody PostDTO dto) {

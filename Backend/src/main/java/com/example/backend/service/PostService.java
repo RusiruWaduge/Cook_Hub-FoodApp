@@ -50,6 +50,10 @@ public class PostService {
     public List<PostDTO> getPublicPosts() {
         List<Post> posts = postRepository.findByIsPublicTrue();
 
+        if (posts.isEmpty()) {
+            System.out.println("No public posts found."); // Debugging log
+        }
+
         return posts.stream().map(post -> {
             User user = userRepository.findByEmail(post.getUserEmail()).orElse(null);
             String username = (user != null) ? user.getUsername() : "Unknown";

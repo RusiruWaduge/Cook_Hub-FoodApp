@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaUserCircle, FaLock, FaGlobe, FaShareAlt, FaThumbsUp, FaComment, FaEdit, FaTrashAlt } from "react-icons/fa";
-import Navbar from "./Navbar";
+import Navbar from "./NavBar"; // Adjust the import path as necessary
 import axios from "axios";
 
 const CreatePost = () => {

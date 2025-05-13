@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "./Navbar";
+import Navbar from "./NavBar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -8,16 +8,16 @@ const Home = () => {
   const [username, setUsername] = useState("");
   const [foodCommunities, setFoodCommunities] = useState([]);
   const [publicPosts, setPublicPosts] = useState([]);
+  const [expandedPostId, setExpandedPostId] = useState(null);  // Track expanded posts
   const [showForm, setShowForm] = useState(false);
   const [newCommunity, setNewCommunity] = useState({
     name: "",
     description: "",
   });
-  const [commentContent, setCommentContent] = useState("");
-  const [showCommentBox, setShowCommentBox] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Define the list of users to follow
   const usersToFollow = [
     { id: 1, name: "Alice 🍳", specialty: "Home Cooking" },
     { id: 2, name: "Bob 🍜", specialty: "Asian Cuisine" },
@@ -54,84 +54,17 @@ const Home = () => {
   const fetchPublicPosts = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "http://localhost:8080/api/posts/public",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get("http://localhost:8080/api/posts/public", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const postsWithDetails = await Promise.all(
-        response.data.map(async (post) => {
-          const [likesResponse, commentsResponse, userLikeResponse] =
-            await Promise.all([
-              axios.get(
-                `http://localhost:8080/api/likecomment/likes/count/${post.id}`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                }
-              ),
-              axios.get(
-                `http://localhost:8080/api/likecomment/comments/${post.id}`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                }
-              ),
-              axios.get(
-                `http://localhost:8080/api/likecomment/user-like/${post.id}`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    userId: token,
-                  },
-                }
-              ),
-            ]);
+      console.log("Fetched public posts:", response.data); // Log the posts to verify
 
-          return {
-            ...post,
-            likeCount: likesResponse.data,
-            comments: commentsResponse.data,
-            likedByUser: userLikeResponse.data.liked,
-          };
-        })
-      );
-
-      setPublicPosts(postsWithDetails);
+      setPublicPosts(response.data); // Set the public posts state directly
     } catch (error) {
       console.error("Error fetching public posts:", error);
-    }
-  };
-
-  const handleLikeToggle = async (postId) => {
-    const token = localStorage.getItem("token");
-    const username = localStorage.getItem("username");
-
-    if (!token || !username) {
-      console.error("Token or Username is missing!");
-      return;
-    }
-
-    try {
-      await axios.post(
-        `http://localhost:8080/api/likecomment/toggle-like/${postId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            userId: token,
-            username: username,
-          },
-        }
-      );
-      fetchPublicPosts();
-    } catch (error) {
-      console.error("Error toggling like:", error);
-      if (error.response?.status === 403) {
-        alert("You are not authorized to like this post.");
-      }
     }
   };
 
@@ -141,67 +74,21 @@ const Home = () => {
     window.location.href = "/login";
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(
-        "http://localhost:8080/api/communities",
-        newCommunity
-      );
-      setFoodCommunities([...foodCommunities, response.data]);
-      setNewCommunity({ name: "", description: "" });
-      setShowForm(false);
-    } catch (error) {
-      console.error("Error creating community:", error);
-      alert("Failed to create the community. Please try again later.");
+  // Function to truncate the content
+  const truncateContent = (content, limit = 150) => {
+    if (content.length > limit) {
+      return content.slice(0, limit) + "...";
     }
+    return content;
   };
 
-  const handleComment = (postId) => {
-    setShowCommentBox(postId === showCommentBox ? null : postId);
-  };
-
-  const handleCommentSubmit = async (e, postId) => {
-    e.preventDefault();
-
-    if (!commentContent.trim()) {
-      alert("Please enter a comment.");
-      return;
+  // Toggle expanded content on "View More" click
+  const toggleExpandedPost = (postId) => {
+    if (expandedPostId === postId) {
+      setExpandedPostId(null); // Collapse the post if it's already expanded
+    } else {
+      setExpandedPostId(postId); // Expand the post
     }
-
-    const token = localStorage.getItem("token");
-    const username = localStorage.getItem("username");
-
-    if (!token || !username) {
-      alert("Authentication token or username is missing. Please log in again.");
-      return;
-    }
-
-    try {
-      await axios.post(
-        `http://localhost:8080/api/likecomment/comment/${postId}`,
-        commentContent, // Changed to 'content' if backend expects this
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "text/plain",
-            userId: token,
-            username: username,
-          },
-        }
-      );
-
-      setCommentContent("");
-      setShowCommentBox(null);
-      fetchPublicPosts();
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      alert(error.response?.data?.message || "Failed to add comment. Please try again later.");
-    }
-  };
-
-  const handleCommentChange = (e) => {
-    setCommentContent(e.target.value);
   };
 
   if (isLoading) {
@@ -321,62 +208,46 @@ const Home = () => {
                         {post.title}
                       </h3>
                       <p className="text-gray-600 mb-4 whitespace-pre-line">
-                        {post.content}
+                        {expandedPostId === post.id
+                          ? post.content
+                          : truncateContent(post.content, 150)}
                       </p>
 
-                      {/* Like and Comment Buttons */}
+                      {/* View More / View Less */}
+                      {post.content.length > 150 && (
+                        <button
+                          onClick={() => toggleExpandedPost(post.id)}
+                          className="text-orange-600 text-sm hover:underline"
+                        >
+                          {expandedPostId === post.id ? "View Less" : "View More"}
+                        </button>
+                      )}
+
+                      {/* Like and Comment Buttons (just for display) */}
                       <div className="flex items-center justify-between border-t border-b border-gray-100 py-3">
                         <button
-                          onClick={() => handleLikeToggle(post.id)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                            post.likedByUser
-                              ? "text-red-500 bg-red-50 hover:bg-red-100"
-                              : "text-gray-600 hover:bg-gray-100"
-                          }`}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
                         >
-                          {post.likedByUser ? (
-                            <>
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Liked
-                            </>
-                          ) : (
-                            <>
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                                />
-                              </svg>
-                              Like
-                            </>
-                          )}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                          </svg>
+                          Like
                         </button>
-                        <span className="text-gray-500">
-                          {post.likeCount} likes
-                        </span>
+                        <span className="text-gray-500">{post.likeCount} likes</span>
 
                         <button
-                          onClick={() => handleComment(post.id)}
-                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -394,82 +265,6 @@ const Home = () => {
                           </svg>
                           Comment
                         </button>
-                      </div>
-
-                      {/* Comments Section */}
-                      <div className="mt-4">
-                        <h4 className="font-medium text-gray-700 mb-2">
-                          Comments ({post.comments?.length || 0})
-                        </h4>
-
-                        {/* Existing Comments */}
-                        {post.comments && post.comments.length > 0 ? (
-                          <div className="space-y-3">
-                            {post.comments.map((comment) => (
-                              <div
-                                key={comment.id}
-                                className="flex items-start gap-3"
-                              >
-                                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 mt-1">
-                                  {comment.username?.charAt(0).toUpperCase() ||
-                                    "U"}
-                                </div>
-                                <div className="flex-1 bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex justify-between items-start">
-                                    <span className="font-medium text-gray-800">
-                                      {comment.username}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {comment.createdAt &&
-                                        formatDistanceToNow(
-                                          new Date(comment.createdAt),
-                                          { addSuffix: true }
-                                        )}
-                                    </span>
-                                  </div>
-                                  <p className="text-gray-600 mt-1">
-                                    {comment.comment}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-gray-400 italic text-center py-4">
-                            No comments yet. Be the first to comment!
-                          </p>
-                        )}
-
-                        {/* Comment Form */}
-                        {showCommentBox === post.id && (
-                          <form
-                            onSubmit={(e) => handleCommentSubmit(e, post.id)}
-                            className="mt-4"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 mt-1">
-                                {username.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex-1">
-                                <textarea
-                                  value={commentContent}
-                                  onChange={handleCommentChange}
-                                  className="w-full p-3 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all"
-                                  placeholder="Write a comment..."
-                                  rows="2"
-                                />
-                                <div className="flex justify-end mt-2">
-                                  <button
-                                    type="submit"
-                                    className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-                                  >
-                                    Post
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </form>
-                        )}
                       </div>
                     </div>
                   </div>
