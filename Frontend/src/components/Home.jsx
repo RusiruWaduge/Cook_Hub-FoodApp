@@ -3,6 +3,10 @@ import Navbar from "./Navbar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Footer from "./footer";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const Home = () => {
   const [username, setUsername] = useState("");
@@ -14,8 +18,15 @@ const Home = () => {
     description: "",
   });
   const [commentContent, setCommentContent] = useState("");
+  const [editingComment, setEditingComment] = useState({
+    id: null,
+    content: "",
+  });
+  const [showEditForm, setShowEditForm] = useState(null);
   const [showCommentBox, setShowCommentBox] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const navigate = useNavigate();
 
   const usersToFollow = [
@@ -24,8 +35,6 @@ const Home = () => {
     { id: 3, name: "Charlie 🍕", specialty: "Italian Food" },
     { id: 4, name: "Dana 🥗", specialty: "Healthy Eating" },
   ];
-  const backgroundImageUrl = "https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80";
-
 
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
@@ -137,33 +146,6 @@ const Home = () => {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
-      alert("Authentication token is missing. Please log in again.");
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to delete this comment?")) {
-      return;
-    }
-
-    try {
-      await axios.delete(
-        `http://localhost:8080/api/likecomment/comment/${commentId}`,
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      await Promise.all([fetchCommunities(), fetchPublicPosts()]);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -192,18 +174,22 @@ const Home = () => {
 
   const handleCommentSubmit = async (e, postId) => {
     e.preventDefault();
+
     if (!commentContent.trim()) {
       alert("Please enter a comment.");
       return;
     }
-  
+
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
     const username = localStorage.getItem("username");
-  
-    if (!token || !username) {
-      alert("Authentication token or username is missing. Please log in again.");
+
+    if (!username || !userId) {
+      alert("User information is missing. Please log in again.");
       return;
     }
+
+    setActionLoading(`comment-${postId}`);
     try {
       await axios.post(
         `http://localhost:8080/api/likecomment/comment/${postId}`,
@@ -211,18 +197,90 @@ const Home = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            userId: userId,
+            username: username,
             "Content-Type": "text/plain",
-            userId: token,
-            username: username
           },
         }
       );
+
       setCommentContent("");
       setShowCommentBox(null);
       fetchPublicPosts();
+      toast.success("Comment added successfully!");
     } catch (error) {
       console.error("Error adding comment:", error);
-      alert(error.response?.data?.message || "Failed to add comment. Please try again later.");
+      toast.error("Failed to add comment. Please try again later.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEditClick = (comment) => {
+    setEditingComment({ id: comment.id, content: comment.comment });
+    setShowEditForm(comment.id);
+  };
+
+  const handleEditChange = (e) => {
+    setEditingComment((prev) => ({ ...prev, content: e.target.value }));
+  };
+
+  const handleEditSubmit = async (e, postId, commentId) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      toast.error("User is not logged in or user ID not found.");
+      return;
+    }
+
+    setActionLoading(`edit-${commentId}`);
+    try {
+      await axios.put(
+        `http://localhost:8080/api/likecomment/comment/${commentId}`,
+        editingComment.content,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "text/plain",
+            userId: userId,
+          },
+        }
+      );
+      setShowEditForm(null);
+      setEditingComment({ id: null, content: "" });
+      fetchPublicPosts();
+      toast.success("Comment updated successfully!");
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      toast.error("Failed to update comment.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    const userId = localStorage.getItem("userId");
+
+    setActionLoading(`delete-${commentId}`);
+    try {
+      await axios.delete(
+        `http://localhost:8080/api/likecomment/comment/${commentId}`,
+        {
+          headers: {
+            userId: userId,
+          },
+        }
+      );
+      toast.success("Comment deleted successfully!");
+      fetchPublicPosts();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("Failed to delete comment.");
+    } finally {
+      setActionLoading(null);
+      setShowDeleteConfirm(null);
     }
   };
 
@@ -231,39 +289,28 @@ const Home = () => {
   };
 
   if (isLoading) {
-    return (
-      <div 
-        className="flex justify-center items-center min-h-screen"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), url(${backgroundImageUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      >
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-      </div>
-    );
+    return <LoadingSpinner message="Logging you in..." />;
   }
 
   return (
     <>
       <Navbar />
-      <div 
-        className="min-h-screen p-4 md:p-10 font-sans"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 240, 220, 0.9)), url(${backgroundImageUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <div className="min-h-screen bg-gradient-to-br from-[#FFFBF2] via-[#FFDCB9] to-[#ffaa6b] p-4 md:p-10 font-sans">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-start gap-6 flex-col lg:flex-row">
             {/* Left Column - User Profile & Suggestions */}
             <div className="lg:w-1/4 w-full">
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 backdrop-blur-sm bg-opacity-80">
+              <div className="bg-white rounded-xl shadow-md p-6 mb-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-full bg-orange-200 flex items-center justify-center text-2xl font-bold text-orange-600">
                     {username.charAt(0).toUpperCase()}
@@ -282,7 +329,8 @@ const Home = () => {
                   Logout
                 </button>
               </div>
-              <div className="bg-white rounded-xl shadow-lg p-6 backdrop-blur-sm bg-opacity-80">
+
+              <div className="bg-white rounded-xl shadow-md p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
                     👥
@@ -307,13 +355,13 @@ const Home = () => {
                     </li>
                   ))}
                 </ul>
+                آمریک{" "}
               </div>
             </div>
 
             {/* Center Column - Posts */}
             <div className="lg:w-2/4 w-full">
-
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-6 backdrop-blur-sm bg-opacity-80">
+              <div className="bg-white rounded-xl shadow-md p-6 mb-6">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
                   <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
                     🥘
@@ -329,8 +377,7 @@ const Home = () => {
                 {publicPosts.map((post) => (
                   <div
                     key={post.id}
-
-                    className="bg-white rounded-xl shadow-lg overflow-hidden transition-all hover:shadow-xl backdrop-blur-sm bg-opacity-80"
+                    className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg"
                   >
                     {/* Post Header */}
                     <div className="p-4 border-b border-gray-100 flex items-center gap-3">
@@ -441,48 +488,223 @@ const Home = () => {
                       </div>
 
                       {/* Comments Section */}
-                      <div className="mt-4">
-                        <h4 className="font-medium text-gray-700 mb-2">
+                      <div className="mt-6">
+                        <h4 className="font-semibold text-gray-800 mb-4">
                           Comments ({post.comments?.length || 0})
                         </h4>
 
                         {/* Existing Comments */}
                         {post.comments && post.comments.length > 0 ? (
-                          <div className="space-y-3">
+                          <div className="space-y-4">
                             {post.comments.map((comment) => (
                               <div
                                 key={comment.id}
-                                className="flex items-start gap-3"
+                                className="relative flex items-start gap-3 transition-all duration-200 hover:bg-gray-50 rounded-lg p-3"
                               >
-                                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 mt-1">
+                                <div className="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center text-sm font-bold text-orange-600">
                                   {comment.username?.charAt(0).toUpperCase() ||
                                     "U"}
                                 </div>
-                                <div className="flex-1 bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex justify-between items-start">
-                                    <span className="font-medium text-gray-800">
-                                      {comment.username}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {comment.createdAt &&
-                                        formatDistanceToNow(
-                                          new Date(comment.createdAt),
-                                          { addSuffix: true }
-                                        )}
-                                    </span>
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-gray-800">
+                                        {comment.username}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        {comment.createdAt &&
+                                          formatDistanceToNow(
+                                            new Date(comment.createdAt),
+                                            {
+                                              addSuffix: true,
+                                            }
+                                          )}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <p className="text-gray-600 mt-1">
-                                    {comment.comment}
-                                  </p>
-                                  {comment.userId === localStorage.getItem("token") && (
-                                    <button 
-                                      onClick={() => handleDeleteComment(comment.id)}
-                                      className="mt-2 text-xs text-red-500 hover:text-red-700"
+
+                                  {/* Edit Mode */}
+                                  {showEditForm === comment.id ? (
+                                    <form
+                                      onSubmit={(e) =>
+                                        handleEditSubmit(e, post.id, comment.id)
+                                      }
+                                      className="mt-2 animate-in fade-in duration-200"
                                     >
-                                      Delete
-                                    </button>
+                                      <textarea
+                                        value={editingComment.content}
+                                        onChange={handleEditChange}
+                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
+                                        rows={3}
+                                        aria-label="Edit comment"
+                                      />
+                                      <div className="flex gap-2 mt-3">
+                                        <button
+                                          type="submit"
+                                          disabled={
+                                            actionLoading ===
+                                            `edit-${comment.id}`
+                                          }
+                                          className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        >
+                                          {actionLoading ===
+                                          `edit-${comment.id}` ? (
+                                            <svg
+                                              className="animate-spin h-5 w-5"
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                              ></circle>
+                                              <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                              ></path>
+                                            </svg>
+                                          ) : (
+                                            "Update"
+                                          )}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setShowEditForm(null)}
+                                          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </form>
+                                  ) : (
+                                    <>
+                                      <p className="text-gray-600 leading-relaxed">
+                                        {comment.comment}
+                                      </p>
+                                      {/* Show Edit/Delete only for comment author */}
+                                      {comment.username === username && (
+                                        <div className="flex gap-3 mt-3">
+                                          <button
+                                            onClick={() =>
+                                              handleEditClick(comment)
+                                            }
+                                            className="text-orange-600 text-sm font-medium hover:text-orange-700 transition-colors flex items-center gap-1"
+                                            aria-label={`Edit comment by ${comment.username}`}
+                                          >
+                                            <svg
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              className="h-4 w-4"
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                              stroke="currentColor"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
+                                            </svg>
+                                            Edit
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              setShowDeleteConfirm(comment.id)
+                                            }
+                                            className="text-red-600 text-sm font-medium hover:text-red-700 transition-colors flex items-center gap-1"
+                                            aria-label={`Delete comment by ${comment.username}`}
+                                          >
+                                            <svg
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              className="h-4 w-4"
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                              stroke="currentColor"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1h-6a1 1 0 011-1zm-4 4h12"
+                                              />
+                                            </svg>
+                                            Delete
+                                          </button>
+                                        </div>
+                                      )}
+                                    </>
                                   )}
                                 </div>
+
+                                {/* Delete Confirmation Dialog */}
+                                {showDeleteConfirm === comment.id && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-10 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-200">
+                                    <div className="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full">
+                                      <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                                        Delete Comment?
+                                      </h3>
+                                      <p className="text-gray-600 mb-4">
+                                        Are you sure you want to delete this
+                                        comment? This action cannot be undone.
+                                      </p>
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteComment(
+                                              post.id,
+                                              comment.id
+                                            )
+                                          }
+                                          disabled={
+                                            actionLoading ===
+                                            `delete-${comment.id}`
+                                          }
+                                          className="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        >
+                                          {actionLoading ===
+                                          `delete-${comment.id}` ? (
+                                            <svg
+                                              className="animate-spin h-5 w-5"
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                              ></circle>
+                                              <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                              ></path>
+                                            </svg>
+                                          ) : (
+                                            "Delete"
+                                          )}
+                                        </button>
+                                        <button
+                                          onClick={() =>
+                                            setShowDeleteConfirm(null)
+                                          }
+                                          className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -496,26 +718,53 @@ const Home = () => {
                         {showCommentBox === post.id && (
                           <form
                             onSubmit={(e) => handleCommentSubmit(e, post.id)}
-                            className="mt-4"
+                            className="mt-6 animate-in fade-in duration-200"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 mt-1">
+                              <div className="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center text-sm font-bold text-orange-600">
                                 {username.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex-1">
                                 <textarea
                                   value={commentContent}
                                   onChange={handleCommentChange}
-                                  className="w-full p-3 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all"
+                                  className="w-full p-3 rounded-lg border border-gray-200 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
                                   placeholder="Write a comment..."
-                                  rows="2"
+                                  rows="3"
+                                  aria-label="Write a comment"
                                 />
-                                <div className="flex justify-end mt-2">
+                                <div className="flex justify-end mt-3">
                                   <button
                                     type="submit"
-                                    className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                                    disabled={
+                                      actionLoading === `comment-${post.id}`
+                                    }
+                                    className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                   >
-                                    Post
+                                    {actionLoading === `comment-${post.id}` ? (
+                                      <svg
+                                        className="animate-spin h-5 w-5"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                      </svg>
+                                    ) : (
+                                      "Post Comment"
+                                    )}
                                   </button>
                                 </div>
                               </div>
@@ -531,10 +780,9 @@ const Home = () => {
 
             {/* Right Column - Communities */}
             <div className="lg:w-1/4 w-full">
-              <div className="bg-white rounded-xl shadow-lg p-6 backdrop-blur-sm bg-opacity-80">
+              <div className="bg-white rounded-xl shadow-md p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <span className="bg-orange-100 text-orange-600 p-2 rounded-full">
-                  </span>
+                  <span className="bg-orange-100 text-orange-600 p-2 rounded-full"></span>
                   Food Communities
                 </h2>
 
@@ -550,7 +798,7 @@ const Home = () => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                      d="M STREAMING 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
                       clipRule="evenodd"
                     />
                   </svg>
@@ -662,6 +910,7 @@ const Home = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 };
