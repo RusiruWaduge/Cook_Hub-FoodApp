@@ -12,7 +12,6 @@ import {
 import Navbar from "./NavBar";
 import axios from "axios";
 
-
 // Normalize image property into image string (backend legacy fix)
 const normalizePostImage = (post) => {
   if (post.image) return post;
@@ -32,6 +31,7 @@ const CreatePost = () => {
   const [showModal, setShowModal] = useState(false);
   const [fullImage, setFullImage] = useState(null);
   const [validationError, setValidationError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); // Track which post is being deleted
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -122,6 +122,7 @@ const CreatePost = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPosts(posts.filter((p) => p.id !== postId));
+      setShowDeleteConfirm(null);
     } catch (error) {
       console.error("Error deleting post:", error);
     }
@@ -222,7 +223,7 @@ const CreatePost = () => {
 
               <label
                 htmlFor="image-upload"
-                className="cursor-pointer inline-block bg-gradient-to-r from-orange-400 to-yellow-400 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 max-w-max"
+                className="cursor-pointer inline-block bg-gradient-to-r from-orange-400 to-yellow-400 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 active:scale-95 max-w-max animate-bounce-once"
               >
                 Add Image
               </label>
@@ -260,7 +261,7 @@ const CreatePost = () => {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-orange-500 to-yellow-400 text-white px-8 py-3 rounded-3xl font-semibold shadow-md hover:shadow-xl transition transform hover:-translate-y-1"
+                  className="bg-gradient-to-r from-orange-500 to-yellow-400 text-white px-8 py-3 rounded-3xl font-semibold shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 active:scale-95 animate-pulse-once"
                   disabled={validationError !== ""}
                 >
                   {editingPostId ? "Update Post" : "Post"}
@@ -319,7 +320,7 @@ const CreatePost = () => {
                       </button>
 
                       <button
-                        onClick={() => handleDeletePost(post.id)}
+                        onClick={() => setShowDeleteConfirm(post.id)}
                         title="Delete Post"
                         className="text-red-600 hover:text-red-800"
                       >
@@ -347,6 +348,30 @@ const CreatePost = () => {
                       <FaComment /> Comment
                     </button>
                   </div>
+
+                  {/* Delete Confirmation Modal */}
+                  {showDeleteConfirm === post.id && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full">
+                        <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
+                        <p className="mb-6">Are you sure you want to delete this post? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-4">
+                          <button
+                            onClick={() => setShowDeleteConfirm(null)}
+                            className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
