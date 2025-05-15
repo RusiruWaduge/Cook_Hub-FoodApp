@@ -50,6 +50,7 @@ public class FoodCommunityController {
 
     // Get a specific food community by ID
     @GetMapping("/{id}")
+
     public FoodCommunity getCommunityById(@PathVariable String id) {
         try {
             Optional<FoodCommunity> community = foodCommunityRepository.findById(id);
@@ -72,6 +73,7 @@ public class FoodCommunityController {
 
         if (optionalCommunity.isPresent()) {
             FoodCommunity community = optionalCommunity.get();
+
             List<String> members = community.getMembers();
 
             if (!members.contains(userName)) {
@@ -103,6 +105,7 @@ public class FoodCommunityController {
     }
 
    @PostMapping("/{id}/leave")
+
 public FoodCommunity leaveCommunity(@PathVariable String id, @RequestParam String userName) {
     Optional<FoodCommunity> optionalCommunity = foodCommunityRepository.findById(id);
 
@@ -187,6 +190,7 @@ public ResponseEntity<?> deleteCommunity(@PathVariable String id) {
 
 
 
+
 // Add this method in your FoodCommunityController class
 @PostMapping("/{communityId}/posts/{postId}/unlike")
 public ResponseEntity<?> unlikePost(@PathVariable String communityId, 
@@ -213,8 +217,6 @@ public ResponseEntity<?> unlikePost(@PathVariable String communityId,
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Post not found.");
     }
 }
-
-
 
 
 

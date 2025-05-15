@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -79,10 +80,12 @@ public class PostService {
         post.setImage(dto.getImage());
         post.setIsPublic(dto.getIsPublic()); 
 
+
         return postRepository.save(post);
     }
 
-    // Update the visibility of a post
+
+
     public Post updateVisibility(String postId, boolean isPublic) {
         Optional<Post> postOptional = postRepository.findById(postId);
         if (postOptional.isPresent()) {
@@ -142,4 +145,5 @@ public class PostService {
             return false; // Post not found
         }
     }
+
 }

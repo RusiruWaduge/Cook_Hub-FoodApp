@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/communities/**").permitAll() // <--- add this line
                 .requestMatchers("/api/posts/**").permitAll() // <--- add this line
                 .requestMatchers("/api/learningplans/**").permitAll() // <--- add this line
-                
+                .requestMatchers("/api/likecomment/**").permitAll() // <--- add this line
                 .anyRequest().authenticated() // Everything else needs auth
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // Add our JWT filter

@@ -13,3 +13,4 @@ public interface LikeCommentRepository extends MongoRepository<LikeComment, Stri
     List<LikeComment> findByPostIdAndCommentIsNotNull(String postId);
     boolean existsByPostIdAndUserIdAndLiked(String postId, String userId, boolean liked);
 }
+

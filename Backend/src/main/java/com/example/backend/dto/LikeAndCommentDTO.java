@@ -39,4 +39,6 @@ public class LikeAndCommentDTO {
     public void setType(String type) {
         this.type = type;
     }
+
 }
+

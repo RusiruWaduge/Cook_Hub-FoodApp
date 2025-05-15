@@ -51,7 +51,7 @@ public class LikeCommentController {
             @RequestHeader("userId") String userId) {
         return ResponseEntity.ok(likeCommentService.getUserLikeStatus(postId, userId));
     }
-
+    
     @DeleteMapping("/comment/{commentId}")
     public ResponseEntity<String> deleteComment(
             @PathVariable String commentId,
