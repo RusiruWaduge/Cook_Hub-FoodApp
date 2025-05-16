@@ -38,15 +38,27 @@ public class LearningPlanController {
         return plan.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
-    // Delete a Learning Plan
+    // ✨ ADD THIS: Delete Learning Plan by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteLearningPlan(@PathVariable String id) {
-        if (learningPlanService.deleteLearningPlan(id)) {
-            return ResponseEntity.noContent().build();
+        boolean deleted = learningPlanService.deleteLearningPlan(id);
+        if (deleted) {
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } else {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<LearningPlan> updateLearningPlan(
+            @PathVariable String id, @RequestBody LearningPlan updatedPlan) {
 
+        LearningPlan updated = learningPlanService.updateLearningPlan(id, updatedPlan);
+
+        if (updated != null) {
+            return new ResponseEntity<>(updated, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Plan not found
+        }
+    }
 }
