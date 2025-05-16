@@ -8,6 +8,7 @@ import LearningPlans from "./components/LearningPlans";
 import LearningPlanDetails from "./components/LearningPlanDetails";
 import CreateLearningPlan from "./components/CreateLeaningPlan";
 import CommunityPage from "./components/CommunityPage";
+import UpdatePlanDetails from "./components/UpdateLearningPlan";
 import ProfilePage from "./components/CreatePost";
 
 
@@ -36,6 +37,10 @@ function App() {
           <Route
             path="/create-learning-plan"
             element={<CreateLearningPlan />}
+          />
+                    <Route
+            path="/edit-learning-plan/:id"
+            element={<UpdatePlanDetails />}
           />
         </Routes>
       </>

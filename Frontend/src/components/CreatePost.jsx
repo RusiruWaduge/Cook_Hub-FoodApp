@@ -9,7 +9,7 @@ import {
   FaEdit,
   FaTrashAlt,
 } from "react-icons/fa";
-import Navbar from "./NavBar";
+import Navbar from "./Navbar";
 import axios from "axios";
 
 // Normalize image property into images array (backend legacy fix)

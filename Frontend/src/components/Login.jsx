@@ -12,6 +12,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      setIsLoading(true); // Start showing loading spinner
       const res = await axios.post("http://localhost:8080/api/auth/login", {
         email,
         password,
@@ -24,8 +25,16 @@ const Login = () => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
-      navigate("/");
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      }
+
+      // Simulate loading for a moment before navigating
+      setTimeout(() => {
+        navigate("/");
+      }, 1500); // 1.5 seconds
     } catch (err) {
+      setIsLoading(false); // Stop loading if error
       alert("Login failed");
     }
   };

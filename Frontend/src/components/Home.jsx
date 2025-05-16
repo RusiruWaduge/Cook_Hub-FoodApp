@@ -174,21 +174,20 @@ const Home = () => {
 
   const handleCommentSubmit = async (e, postId) => {
     e.preventDefault();
-
+  
     if (!commentContent.trim()) {
       alert("Please enter a comment.");
       return;
     }
-
+  
     const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
     const username = localStorage.getItem("username");
-
-    if (!username || !userId) {
+  
+    if (!username) {
       alert("User information is missing. Please log in again.");
       return;
     }
-
+  
     setActionLoading(`comment-${postId}`);
     try {
       await axios.post(
@@ -197,13 +196,12 @@ const Home = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            userId: userId,
             username: username,
             "Content-Type": "text/plain",
           },
         }
       );
-
+  
       setCommentContent("");
       setShowCommentBox(null);
       fetchPublicPosts();
@@ -215,6 +213,7 @@ const Home = () => {
       setActionLoading(null);
     }
   };
+  
 
   const handleEditClick = (comment) => {
     setEditingComment({ id: comment.id, content: comment.comment });
@@ -228,9 +227,9 @@ const Home = () => {
   const handleEditSubmit = async (e, postId, commentId) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
+    const username = localStorage.getItem("username");
 
-    if (!userId) {
+    if (!username) {
       toast.error("User is not logged in or user ID not found.");
       return;
     }
@@ -244,7 +243,7 @@ const Home = () => {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "text/plain",
-            userId: userId,
+            username: username,
           },
         }
       );
@@ -261,7 +260,7 @@ const Home = () => {
   };
 
   const handleDeleteComment = async (postId, commentId) => {
-    const userId = localStorage.getItem("userId");
+    const username = localStorage.getItem("username");
 
     setActionLoading(`delete-${commentId}`);
     try {
@@ -269,7 +268,7 @@ const Home = () => {
         `http://localhost:8080/api/likecomment/comment/${commentId}`,
         {
           headers: {
-            userId: userId,
+            username: username,
           },
         }
       );
@@ -297,7 +296,7 @@ const Home = () => {
       <Navbar />
       <ToastContainer
         position="top-right"
-        autoClose={3000}
+        autoClose={2000}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
