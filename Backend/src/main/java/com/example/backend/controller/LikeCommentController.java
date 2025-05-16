@@ -5,6 +5,7 @@ import com.example.backend.service.LikeCommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -28,12 +29,12 @@ public class LikeCommentController {
     @PostMapping("/comment/{postId}")
     public ResponseEntity<String> addComment(
             @PathVariable String postId,
-            @RequestHeader("userId") String userId,
             @RequestHeader("username") String username,
             @RequestBody String commentContent) {
-        likeCommentService.addComment(postId, userId, username, commentContent);
+        likeCommentService.addComment(postId, username, commentContent);
         return ResponseEntity.ok("Comment added successfully.");
     }
+    
 
     @GetMapping("/likes/count/{postId}")
     public ResponseEntity<Integer> getLikeCount(@PathVariable String postId) {
@@ -51,12 +52,35 @@ public class LikeCommentController {
             @RequestHeader("userId") String userId) {
         return ResponseEntity.ok(likeCommentService.getUserLikeStatus(postId, userId));
     }
-    
-    @DeleteMapping("/comment/{commentId}")
-    public ResponseEntity<String> deleteComment(
-            @PathVariable String commentId,
-            @RequestHeader("userId") String userId) {
-        likeCommentService.deleteComment(commentId, userId);
-        return ResponseEntity.ok("Comment deleted successfully.");
+
+@PutMapping("/comment/{id}")
+public ResponseEntity<String> updateComment(
+        @PathVariable String id,
+        @RequestHeader("username") String username,
+        @RequestBody String newContent) {
+    try {
+        // Log username for debugging
+        System.out.println("Received username: " + username);
+
+        likeCommentService.updateComment(id, username, newContent);
+        return ResponseEntity.ok("Comment updated successfully.");
+    } catch (RuntimeException e) {
+        System.out.println("Error: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
     }
+}
+
+@DeleteMapping("/comment/{id}")
+public ResponseEntity<String> deleteComment(
+        @PathVariable String id,
+        @RequestHeader("username") String username) {
+    try {
+        likeCommentService.deleteComment(id, username);
+        return ResponseEntity.ok("Comment deleted successfully.");
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    }
+}
+
+
 }

@@ -17,8 +17,8 @@ public class LikeCommentService {
 
     public void toggleLike(String postId, String userId, String username) {
         LikeComment existingLike = likeCommentRepository
-            .findTopByPostIdAndUserIdAndLiked(postId, userId, true);
-        
+                .findTopByPostIdAndUserIdAndLiked(postId, userId, true);
+
         if (existingLike == null) {
             LikeComment newLike = new LikeComment();
             newLike.setPostId(postId);
@@ -31,10 +31,9 @@ public class LikeCommentService {
         }
     }
 
-    public void addComment(String postId, String userId, String username, String commentContent) {
+    public void addComment(String postId, String username, String commentContent) {
         LikeComment comment = new LikeComment();
         comment.setPostId(postId);
-        comment.setUserId(userId);
         comment.setUsername(username);
         comment.setComment(commentContent);
         comment.setLiked(false);
@@ -55,15 +54,23 @@ public class LikeCommentService {
         return response;
     }
 
-    public void deleteComment(String commentId, String userId) {
-        LikeComment comment = likeCommentRepository.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("Comment not found"));
-        
-        if (!comment.getUserId().equals(userId)) {
-            throw new RuntimeException("You can only delete your own comments");
+    public void updateComment(String id, String username, String newContent) {
+        LikeComment comment = likeCommentRepository.findById(id).orElse(null);
+        if (comment != null && comment.getUsername().equals(username) && comment.getComment() != null) {
+            comment.setComment(newContent);
+            likeCommentRepository.save(comment);
+        } else {
+            throw new RuntimeException("Comment not found or you are not authorized to update it.");
         }
-        
-        likeCommentRepository.delete(comment);
     }
-
+    
+    public void deleteComment(String id, String username) {
+        LikeComment comment = likeCommentRepository.findById(id).orElse(null);
+        if (comment != null && comment.getUsername().equals(username) && comment.getComment() != null) {
+            likeCommentRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Comment not found or you are not authorized to delete it.");
+        }
+    }
+    
 }
