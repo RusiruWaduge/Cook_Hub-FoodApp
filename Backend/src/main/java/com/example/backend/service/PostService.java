@@ -40,7 +40,7 @@ public class PostService {
             postDTO.setUserEmail(post.getUserEmail());
             postDTO.setTitle(post.getTitle());
             postDTO.setContent(post.getContent());
-            postDTO.setImage(post.getImage());
+            postDTO.setImages(post.getImages());
             postDTO.setIsPublic(post.getIsPublic());
             postDTO.setUsername(username);
             return postDTO;
@@ -60,7 +60,7 @@ public class PostService {
             postDTO.setUserEmail(post.getUserEmail());
             postDTO.setTitle(post.getTitle());
             postDTO.setContent(post.getContent());
-            postDTO.setImage(post.getImage());
+            postDTO.setImages(post.getImages());
             postDTO.setIsPublic(post.getIsPublic());
             postDTO.setUsername(username);
             return postDTO;
@@ -77,7 +77,7 @@ public class PostService {
         post.setUserEmail(dto.getUserEmail());
         post.setTitle(dto.getTitle());
         post.setContent(dto.getContent());
-        post.setImage(dto.getImage());
+        post.setImages(dto.getImages());
         post.setIsPublic(dto.getIsPublic()); 
 
 
@@ -119,7 +119,7 @@ public class PostService {
             // Update post fields
             existingPost.setTitle(dto.getTitle());
             existingPost.setContent(dto.getContent());
-            existingPost.setImage(dto.getImage());  // Update image if provided
+            existingPost.setImages(dto.getImages());  // Update image if provided
             existingPost.setIsPublic(dto.getIsPublic()); 
 
             return postRepository.save(existingPost);

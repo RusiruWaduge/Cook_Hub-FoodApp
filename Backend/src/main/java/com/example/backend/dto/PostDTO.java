@@ -1,10 +1,12 @@
 package com.example.backend.dto;
 
+import java.util.List;
+
 public class PostDTO {
     private String id;
     private String title;
     private String content;
-    private String image;
+    private List<String> images;   // changed from single image to list
     private boolean isPublic;
     private String userEmail;
     private String username;
@@ -24,8 +26,8 @@ public class PostDTO {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public List<String> getImages() { return images; }
+    public void setImages(List<String> images) { this.images = images; }
 
     public boolean getIsPublic() { return isPublic; }
     public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }

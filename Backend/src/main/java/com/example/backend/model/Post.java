@@ -1,5 +1,7 @@
 package com.example.backend.model;
 
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,20 +12,25 @@ public class Post {
     private String id;
     private String title;
     private String content;
-    private String image;
+    
+    // Change this from single image to list of images
+    private List<String> images;
+
     private boolean isPublic;
     private String userEmail;
 
     public Post() {}
 
-    public Post(String title, String content, String image, boolean isPublic, String userEmail) {
+    // Updated constructor to accept list of images
+    public Post(String title, String content, List<String> images, boolean isPublic, String userEmail) {
         this.title = title;
         this.content = content;
-        this.image = image;
+        this.images = images;
         this.isPublic = isPublic;
         this.userEmail = userEmail;
     }
 
+    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -33,8 +40,8 @@ public class Post {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public List<String> getImages() { return images; }
+    public void setImages(List<String> images) { this.images = images; }
 
     public boolean getIsPublic() { return isPublic; }
     public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }

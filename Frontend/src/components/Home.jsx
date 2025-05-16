@@ -397,14 +397,21 @@ const Home = () => {
                       </div>
                     </div>
 
-                    {/* Post Image */}
-                    {post.image && (
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-full h-72 object-cover"
-                      />
-                    )}
+                  {/* Post Images */}
+{post.images && post.images.length > 0 && (
+  <div className="flex gap-4 overflow-x-auto mb-4 py-2 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-orange-100 rounded-lg">
+    {post.images.map((img, idx) => (
+      <img
+        key={idx}
+        src={img}
+        alt={`${post.title} img ${idx + 1}`}
+        className="w-[350px] h-[350px] object-cover rounded-xl flex-shrink-0 cursor-pointer"
+        onClick={() => handleImageClick(img)} // open modal on click
+      />
+    ))}
+  </div>
+)}
+
 
                     {/* Post Content */}
                     <div className="p-6">

@@ -12,10 +12,12 @@ import {
 import Navbar from "./NavBar";
 import axios from "axios";
 
-// Normalize image property into image string (backend legacy fix)
+// Normalize image property into images array (backend legacy fix)
 const normalizePostImage = (post) => {
-  if (post.image) return post;
-  return { ...post, image: "" };
+  if (post.images && post.images.length > 0) return post;
+  // fallback if no images array, convert image string to array or empty
+  if (post.image) return { ...post, images: [post.image] };
+  return { ...post, images: [] };
 };
 
 const CreatePost = () => {
@@ -23,7 +25,7 @@ const CreatePost = () => {
   const [newPost, setNewPost] = useState({
     title: "",
     content: "",
-    image: "",
+    images: [], // <-- changed to array
     isPublic: true,
   });
   const [editingPostId, setEditingPostId] = useState(null);
@@ -32,8 +34,6 @@ const CreatePost = () => {
   const [fullImage, setFullImage] = useState(null);
   const [validationError, setValidationError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-
-  // Loading state for page load and fetching posts
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,18 +67,42 @@ const CreatePost = () => {
 
   const handleImageChange = (e) => {
     setValidationError("");
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-    if (!file.type.startsWith("image/")) {
+    if (files.length + newPost.images.length > 3) {
+      setValidationError("You can select up to 3 images only.");
+      e.target.value = null;
+      return;
+    }
+
+    const invalidFile = files.find((file) => !file.type.startsWith("image/"));
+    if (invalidFile) {
       setValidationError("Please upload a valid image file.");
       e.target.value = null;
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => setNewPost({ ...newPost, image: reader.result });
-    reader.readAsDataURL(file);
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          })
+      )
+    )
+      .then((imagesBase64) => {
+        setNewPost((prev) => ({
+          ...prev,
+          images: [...prev.images, ...imagesBase64],
+        }));
+      })
+      .catch(() => {
+        setValidationError("Error reading one or more image files.");
+      });
   };
 
   const handlePostSubmit = async (e) => {
@@ -92,7 +116,9 @@ const CreatePost = () => {
           newPost,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setPosts(posts.map((p) => (p.id === editingPostId ? normalizePostImage(res.data) : p)));
+        setPosts(
+          posts.map((p) => (p.id === editingPostId ? normalizePostImage(res.data) : p))
+        );
         setEditingPostId(null);
       } else {
         const res = await axios.post("http://localhost:8080/api/posts", newPost, {
@@ -100,7 +126,7 @@ const CreatePost = () => {
         });
         setPosts([normalizePostImage(res.data), ...posts]);
       }
-      setNewPost({ title: "", content: "", image: "", isPublic: true });
+      setNewPost({ title: "", content: "", images: [], isPublic: true });
       setValidationError("");
     } catch (error) {
       console.error("Error posting:", error);
@@ -120,7 +146,7 @@ const CreatePost = () => {
     setNewPost({
       title: post.title,
       content: post.content,
-      image: post.image || "",
+      images: post.images || [],
       isPublic: post.isPublic,
     });
     setEditingPostId(postId);
@@ -162,25 +188,12 @@ const CreatePost = () => {
     <>
       <Navbar />
 
-      {/* Loading overlay spinner */}
- {loading && (
-  <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
-    <div className="w-14 h-14 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-  </div>
-)}
+      {loading && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
+          <div className="w-14 h-14 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
 
-
-
-      {/* Background static fruit/veggie shapes */}
-      <div aria-hidden="true" className="fixed inset-0 -z-10 pointer-events-none">
-        <img src="/banana.svg" alt="" className="absolute top-10 left-5 w-24 opacity-20 animate-pulse-slow" />
-        <img src="/apple.svg" alt="" className="absolute bottom-10 right-10 w-20 opacity-15 animate-pulse-slower" />
-        <img src="/carrot.svg" alt="" className="absolute top-1/2 right-20 w-28 opacity-10 animate-pulse-slow" />
-        <img src="/grape.svg" alt="" className="absolute bottom-20 left-20 w-16 opacity-15 animate-pulse-slower" />
-        <img src="/tomato.svg" alt="" className="absolute top-20 right-1/3 w-20 opacity-10 animate-pulse-slow" />
-      </div>
-
-      {/* Main content wrapper with fade in/out during loading */}
       <div
         className={`relative z-10 min-h-screen bg-gradient-to-br from-[#FFF7E0] via-[#FFF4C1] to-[#FFEFBA] p-6 transition-opacity duration-700 ${
           loading ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -191,7 +204,9 @@ const CreatePost = () => {
           <div className="bg-white bg-opacity-50 backdrop-blur-md shadow-lg rounded-3xl p-8 mb-10 flex items-center gap-6">
             <FaUserCircle className="text-7xl text-orange-500 animate-pulse" />
             <div>
-              <h1 className="text-3xl font-extrabold text-black tracking-tight">Welcome Back!</h1>
+              <h1 className="text-3xl font-extrabold text-black tracking-tight">
+                Welcome Back!
+              </h1>
               <p className="text-black mt-1 max-w-md">
                 Explore your posts, share your moments, and connect with your community.
               </p>
@@ -245,34 +260,49 @@ const CreatePost = () => {
                 htmlFor="image-upload"
                 className="cursor-pointer inline-block bg-gradient-to-r from-orange-400 to-yellow-400 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 active:scale-95 max-w-max animate-bounce-once"
               >
-                Add Image
+                Add Images
               </label>
               <input
                 type="file"
                 id="image-upload"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="hidden"
               />
 
-              {validationError && <p className="text-red-600 font-semibold mt-2">{validationError}</p>}
+              {validationError && (
+                <p className="text-red-600 font-semibold mt-2">{validationError}</p>
+              )}
 
-              {newPost.image && (
-                <div className="relative w-40 h-40 rounded-3xl overflow-hidden shadow-md cursor-pointer transform hover:scale-105 transition duration-300 mt-4">
-                  <img
-                    src={newPost.image}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    onClick={() => handleImageClick(newPost.image)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setNewPost((prev) => ({ ...prev, image: "" }))}
-                    className="absolute top-1 right-1 bg-white bg-opacity-80 rounded-full p-1 text-red-600 hover:text-red-800 shadow"
-                    title="Remove image"
-                  >
-                    &times;
-                  </button>
+              {newPost.images.length > 0 && (
+                <div className="flex gap-4 mt-4 overflow-x-auto max-w-full">
+                  {newPost.images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-40 h-40 rounded-3xl overflow-hidden shadow-md cursor-pointer transform hover:scale-105 transition duration-300 flex-shrink-0"
+                    >
+                      <img
+                        src={img}
+                        alt={`Preview ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onClick={() => handleImageClick(img)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNewPost((prev) => ({
+                            ...prev,
+                            images: prev.images.filter((_, i) => i !== idx),
+                          }))
+                        }
+                        className="absolute top-1 right-1 bg-white bg-opacity-80 rounded-full p-1 text-red-600 hover:text-red-800 shadow"
+                        title="Remove image"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -292,7 +322,6 @@ const CreatePost = () => {
           <div>
             <h3 className="text-2xl font-bold text-black mb-6">📚 Your Posts</h3>
 
-            {/* Show loading shimmer placeholders when loading posts */}
             {loading ? (
               <div className="space-y-6">
                 {[1, 2, 3].map((_, i) => (
@@ -307,22 +336,32 @@ const CreatePost = () => {
                 {posts.map((post) => (
                   <div
                     key={post.id}
-                    className="bg-white bg-opacity-60 backdrop-blur-md p-5 rounded-xl shadow-md cursor-pointer transform transition duration-300 hover:shadow-xl hover:scale-[1.03]"
+                    className="bg-white bg-opacity-60 backdrop-blur-md p-5 rounded-xl shadow-md cursor-pointer transform transition duration-300 hover:shadow-xl hover:scale-[1.03] mb-8"
                   >
-                    {post.image && (
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-full h-64 object-cover rounded-lg cursor-pointer"
-                        onClick={() => handleImageClick(post.image)}
-                      />
+                    {/* MULTIPLE IMAGES WITH SLIDER STYLE */}
+                    {post.images && post.images.length > 0 && (
+                      <div className="flex gap-4 overflow-x-auto mb-4 py-2">
+                        {post.images.map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img}
+                            alt={`${post.title} img ${idx + 1}`}
+                            className="w-[350px] h-[350px] object-cover rounded-xl flex-shrink-0 cursor-pointer"
+                            onClick={() => handleImageClick(img)} // open modal on click
+                          />
+                        ))}
+                      </div>
                     )}
 
                     <div className="flex justify-between items-center mt-4">
-                      <h4 className="text-xl font-semibold text-orange-600">{post.title}</h4>
+                      <h4 className="text-xl font-semibold text-orange-600">
+                        {post.title}
+                      </h4>
                       <div className="flex items-center gap-4">
                         <button
-                          onClick={() => handleToggleVisibility(post.id, post.isPublic)}
+                          onClick={() =>
+                            handleToggleVisibility(post.id, post.isPublic)
+                          }
                           title="Toggle Visibility"
                           className="text-gray-700 hover:text-gray-900"
                         >
@@ -358,6 +397,7 @@ const CreatePost = () => {
                         </button>
                       </div>
                     </div>
+
                     <p className="text-black mt-2">{post.content}</p>
                     <p className="text-sm italic text-gray-600 mt-1">
                       Visibility: {post.isPublic ? "Public" : "Private"}
@@ -379,16 +419,19 @@ const CreatePost = () => {
                       </button>
                     </div>
 
-                    {/* Delete Confirmation Modal for this post */}
+                    {/* Delete Confirmation Modal */}
                     {showDeleteConfirm === post.id && (
                       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div
                           className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <h3 className="text-xl font-bold mb-4">Confirm Deletion</h3>
+                          <h3 className="text-xl font-bold mb-4">
+                            Confirm Deletion
+                          </h3>
                           <p className="mb-6">
-                            Are you sure you want to delete this post? This action cannot be undone.
+                            Are you sure you want to delete this post? This
+                            action cannot be undone.
                           </p>
                           <div className="flex justify-end gap-4">
                             <button
